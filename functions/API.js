@@ -6,7 +6,7 @@ const mysql=require('mysql2')
 var express = require('express');
 var router = express.Router();
 
-router.use('/get_profiles',getProfiles)
+router.post('/get_profiles',getProfiles)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
@@ -17,7 +17,7 @@ async function test (req,res){
           test.forEach(element => {
             filtered[element.phone]=element;
           });
-          result = { status: "OK", result: filtered }
+          result = { status: "OK", result: [filtered] }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
@@ -31,11 +31,11 @@ async function getProfiles(req,res){
     console.log(data);
     await wait(1500)
     if (data.length > 0) {
-      let filtered={}
-      test.forEach(element => {
-        filtered[element.phone]=element;
-      });
-      result = { status: "OK", result: filtered }
+      // let filtered={}
+      // data.forEach(element => {
+      //   filtered[element.phone]=element;
+      // });
+      result = { status: "OK", result: data }
     }
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
