@@ -27,8 +27,8 @@ process.on("SIGINT", () => {
 
 app.get('/test', api.test) // TEST ENDPOINT WITH GET
 
-app.post('/API/get_profiles', api.getProfiles)
-
+// app.post('/API/get_profiles', api.getProfiles)
+app.route('/API/get_profiles').post(api.getProfiles)
 
 app.use((req,res)=>{
   res.writeHead(404, { 'Content-Type': 'application/json' })
