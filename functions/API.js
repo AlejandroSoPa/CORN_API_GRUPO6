@@ -3,6 +3,10 @@ const url = require('url')
 const post = require('../post.js')
 const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
+var express = require('express');
+var router = express.Router();
+
+router.use('/get_profiles',getProfiles)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
@@ -21,6 +25,7 @@ async function test (req,res){
 
 // Fetch all profiles
 async function getProfiles(req,res){
+  console.log("getprofiles");
     let result = { status: "KO", result: "Unkown type" }
     var data = await queryDatabase("SELECT * FROM Usuaris;")
     console.log(data);
@@ -76,4 +81,4 @@ function wait (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-module.exports = { test,getProfiles }
+module.exports = { test,getProfiles,router }
