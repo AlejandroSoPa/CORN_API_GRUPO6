@@ -1,3 +1,9 @@
+const fs = require('fs/promises')
+const url = require('url')
+const post = require('./post.js')
+const { v4: uuidv4 } = require('uuid')
+const mysql=require('mysql2')
+
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
     var test = await queryDatabase("SELECT * FROM Usuaris;")
