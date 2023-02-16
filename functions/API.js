@@ -11,7 +11,7 @@ async function test (req,res){
         if (test.length > 0) {
           let filtered={}
           test.forEach(element => {
-            filtered[element.id]=element;
+            filtered[element.phone]=element;
           });
           result = { status: "OK", result: filtered }
         }
@@ -27,7 +27,7 @@ async function getProfiles(req,res){
         if (data.length > 0) {
           let filtered={}
           test.forEach(element => {
-            filtered[element.id]=element;
+            filtered[element.phone]=element;
           });
           result = { status: "OK", result: filtered }
         }
