@@ -23,15 +23,16 @@ async function test (req,res){
 async function getProfiles(req,res){
     let result = { status: "KO", result: "Unkown type" }
     var data = await queryDatabase("SELECT * FROM Usuaris;")
-        await wait(1500)
-        if (data.length > 0) {
-          let filtered={}
-          test.forEach(element => {
-            filtered[element.phone]=element;
-          });
-          result = { status: "OK", result: filtered }
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+    console.log(data);
+    await wait(1500)
+    if (data.length > 0) {
+      let filtered={}
+      test.forEach(element => {
+        filtered[element.phone]=element;
+      });
+      result = { status: "OK", result: filtered }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
 }
 
