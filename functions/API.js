@@ -9,6 +9,7 @@ async function test (req,res){
     res.end(JSON.stringify(result))
 }
 
+// Fetch all profiles
 async function getProfiles(req,res){
     let result = { status: "KO", result: "Unkown type" }
     var test = await queryDatabase("SELECT * FROM Usuaris;")
