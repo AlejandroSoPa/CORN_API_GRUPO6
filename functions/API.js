@@ -9,7 +9,11 @@ async function test (req,res){
     var test = await queryDatabase("SELECT * FROM Usuaris;")
         await wait(1500)
         if (test.length > 0) {
-          result = { status: "OK", result: test }
+          let filtered={}
+          test.forEach(element => {
+            filtered[element.id]=element;
+          });
+          result = { status: "OK", result: filtered }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
@@ -18,10 +22,14 @@ async function test (req,res){
 // Fetch all profiles
 async function getProfiles(req,res){
     let result = { status: "KO", result: "Unkown type" }
-    var test = await queryDatabase("SELECT * FROM Usuaris;")
+    var data = await queryDatabase("SELECT * FROM Usuaris;")
         await wait(1500)
-        if (test.length > 0) {
-          result = { status: "OK", result: test }
+        if (data.length > 0) {
+          let filtered={}
+          test.forEach(element => {
+            filtered[element.id]=element;
+          });
+          result = { status: "OK", result: filtered }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
