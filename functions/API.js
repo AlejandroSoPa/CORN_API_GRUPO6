@@ -62,4 +62,9 @@ function queryDatabase (query) {
     })
   }
 
+// Wait 'ms' milliseconds
+function wait (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 module.exports = { test,getProfiles }

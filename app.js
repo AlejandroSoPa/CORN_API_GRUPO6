@@ -6,11 +6,6 @@ const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
 const api=require('./functions/API.js')
 
-// Wait 'ms' milliseconds
-function wait (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 // Start HTTP server
 const app = express()
 
