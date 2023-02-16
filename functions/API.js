@@ -21,6 +21,20 @@ async function getProfiles(req,res){
     res.end(JSON.stringify(result))
 }
 
+// Fetch especific profile
+async function getProfile(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Unkown type" }
+  if(!receivedPOST.name){res.end(JSON.stringify(result))}
+    var test = await queryDatabase(`SELECT * FROM Usuaris WHERE id=${receivedPOST.name};`)
+        await wait(1500)
+        if (test.length > 0) {
+          result = { status: "OK", result: test }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify(result))
+}
+
 // Perform a query to the database
 function queryDatabase (query) {
 
@@ -42,4 +56,4 @@ function queryDatabase (query) {
     })
   }
 
-export default { test,getProfiles }
+module.exports = { test,getProfiles }

@@ -4,7 +4,7 @@ const url = require('url')
 const post = require('./post.js')
 const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
-const api=require('./functions/API.js').default
+const api=require('./functions/API.js')
 
 // Wait 'ms' milliseconds
 function wait (ms) {
