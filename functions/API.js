@@ -7,6 +7,8 @@ var express = require('express');
 var router = express.Router();
 
 router.post('/get_profiles',getProfiles)
+router.post('/get_profile',getProfile)
+router.post('/singup',singup)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
@@ -27,32 +29,71 @@ async function test (req,res){
 async function getProfiles(req,res){
   console.log("getprofiles");
     let result = { status: "KO", result: "Unkown type" }
-    var data = await queryDatabase("SELECT * FROM Usuaris;")
-    console.log(data);
-    await wait(1500)
-    if (data.length > 0) {
-      // let filtered={}
-      // data.forEach(element => {
-      //   filtered[element.phone]=element;
-      // });
-      result = { status: "OK", result: data }
+    try {
+      
+      var data = await queryDatabase("SELECT * FROM Usuaris;")
+      await wait(1500)
+      if (data.length > 0) {
+        result = { status: "OK", result: data }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+    } catch (error) {
+      result = { status: "KO", result: "Unkown type" }
     }
-    res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(result))
 }
 
 // Fetch especific profile
 async function getProfile(req,res){
   let receivedPOST = await post.getPostObject(req)
-  let result = { status: "KO", result: "Unkown type" }
-  if(!receivedPOST.name){res.end(JSON.stringify(result))}
-    var test = await queryDatabase(`SELECT * FROM Usuaris WHERE id=${receivedPOST.name};`)
-        await wait(1500)
-        if (test.length > 0) {
-          result = { status: "OK", result: test }
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(result))
+  let result = { status: "KO", result: "Invalid param" }
+  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+
+    await wait(1500)
+    if (data.length > 0) {
+      result = { status: "OK", result: data }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    
+  } catch (error) {
+    result = { status: "KO", result: "Connection to database error" }
+  }
+  res.end(JSON.stringify(result))
+}
+
+// Create or fetch user
+async function singup(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  if(!receivedPOST.name||!receivedPOST.surname||!receivedPOST.phone||!receivedPOST.email){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+
+  try {
+    let phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
+
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+    
+    await wait(1500)
+    if (data.length > 0) {
+      result = { status: "OK", result: data }
+    } else {
+      data = await queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email) VALUES('${receivedPOST.phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}');`)
+      data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+      result = { status: "OK", result: data }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+
+  } catch (error) {
+    result = { status: "KO", result: "Connection to database error" }
+  }
+  res.end(JSON.stringify(result))
+
 }
 
 // Perform a query to the database
@@ -60,10 +101,10 @@ function queryDatabase (query) {
 
     return new Promise((resolve, reject) => {
       var connection = mysql.createConnection({
-        host: process.env.MYSQLHOST || "containers-us-west-16.railway.app",
-        port: process.env.MYSQLPORT || 6850,
+        host: process.env.MYSQLHOST || "containers-us-west-114.railway.app",
+        port: process.env.MYSQLPORT || 7464,
         user: process.env.MYSQLUSER || "root",
-        password: process.env.MYSQLPASSWORD || "WTQPaZyER1KEdRXHNG6S",
+        password: process.env.MYSQLPASSWORD || "Qz21TSQiclO7oIdZmssF",
         database: process.env.MYSQLDATABASE || "railway"
       });
   
@@ -75,6 +116,8 @@ function queryDatabase (query) {
       connection.end();
     })
   }
+
+
 
 // Wait 'ms' milliseconds
 function wait (ms) {
