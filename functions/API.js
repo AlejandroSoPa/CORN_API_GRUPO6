@@ -56,13 +56,14 @@ async function getProfile(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
   if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
+  let phone
   try {
-    let phone=Number.parseInt(receivedPOST.phone)
+     phone=Number.parseInt(receivedPOST.phone)
   } catch (error) {
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone=${phone};`)
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -71,6 +72,7 @@ async function getProfile(req,res){
     res.writeHead(200, { 'Content-Type': 'application/json' })
     
   } catch (error) {
+    console.log(error);
     result = { status: "KO", result: "Connection to database error" }
   }
   res.end(JSON.stringify(result))
@@ -258,9 +260,7 @@ async function finish_payment(req,res){
 
     let desti
     try {
-      console.log(transacction.Desti);
       desti=Number.parseInt(transacction.Desti)
-      console.log(desti);
     } catch (error) {
       return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
     }
