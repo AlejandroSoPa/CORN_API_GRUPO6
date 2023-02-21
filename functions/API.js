@@ -3,17 +3,20 @@ const url = require('url')
 const post = require('../post.js')
 const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
+const utils=require('./utils')
 var express = require('express');
 var router = express.Router();
+const date = require('date-and-time')
 
 router.post('/get_profiles',getProfiles)
 router.post('/get_profile',getProfile)
 router.post('/singup',singup)
+router.post('/setup_payment',setup_payment)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
-    var test = await queryDatabase("SELECT * FROM Usuaris;")
-        await wait(1500)
+    var test = await utils.queryDatabase("SELECT * FROM Usuaris;")
+        await utils.wait(1500)
         if (test.length > 0) {
           let filtered={}
           test.forEach(element => {
@@ -22,6 +25,7 @@ async function test (req,res){
           result = { status: "OK", result: [filtered] }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
+      console.log(utils.makeToken(255));
     res.end(JSON.stringify(result))
 }
 
@@ -31,8 +35,8 @@ async function getProfiles(req,res){
     let result = { status: "KO", result: "Unkown type" }
     try {
       
-      var data = await queryDatabase("SELECT * FROM Usuaris;")
-      await wait(1500)
+      var data = await utils.queryDatabase("SELECT * FROM Usuaris;")
+      await utils.wait(1500)
       if (data.length > 0) {
         result = { status: "OK", result: data }
       }
@@ -49,9 +53,14 @@ async function getProfile(req,res){
   let result = { status: "KO", result: "Invalid param" }
   if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
   try {
-    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+    let phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
+  try {
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
 
-    await wait(1500)
+    await utils.wait(1500)
     if (data.length > 0) {
       result = { status: "OK", result: data }
     }
@@ -66,6 +75,7 @@ async function getProfile(req,res){
 // Create or fetch user
 async function singup(req,res){
   let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
   if(!receivedPOST.name||!receivedPOST.surname||!receivedPOST.phone||!receivedPOST.email){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
@@ -77,18 +87,18 @@ async function singup(req,res){
   }
 
   try {
-    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
     
-    await wait(1500)
     if (data.length > 0) {
       result = { status: "OK", result: data }
     } else {
-      data = await queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email) VALUES('${receivedPOST.phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}');`)
-      data = await queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
+      data = await utils.queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email) VALUES('${phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}');`)
+      data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
       result = { status: "OK", result: data }
     }
     res.writeHead(200, { 'Content-Type': 'application/json' })
-
+    await utils.wait(1500)
+    
   } catch (error) {
     result = { status: "KO", result: "Connection to database error" }
   }
@@ -96,32 +106,66 @@ async function singup(req,res){
 
 }
 
-// Perform a query to the database
-function queryDatabase (query) {
+// create a payment
+async function setup_payment(req,res){
 
-    return new Promise((resolve, reject) => {
-      var connection = mysql.createConnection({
-        host: process.env.MYSQLHOST || "containers-us-west-114.railway.app",
-        port: process.env.MYSQLPORT || 7464,
-        user: process.env.MYSQLUSER || "root",
-        password: process.env.MYSQLPASSWORD || "Qz21TSQiclO7oIdZmssF",
-        database: process.env.MYSQLDATABASE || "railway"
-      });
-  
-      connection.query(query, (error, results) => { 
-        if (error) reject(error);
-        resolve(results)
-      });
-       
-      connection.end();
-    })
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  let phone
+  let amount
+
+  if(!receivedPOST.amount||!receivedPOST.phone){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
 
+  try {
+    phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
 
+  try {
+    amount=Number.parseInt(receivedPOST.amount)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Wrong amount" }))
+  }
 
-// Wait 'ms' milliseconds
-function wait (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  try {
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
+    
+    if (data.length > 0) {
+      try {
+        let now = new Date();
+        now= date.format(now,'YYYY/MM/DD HH:mm:ss');
+        console.log(now);
+        let token=utils.makeToken(255)
+        while (true) {
+          let same=await utils.queryDatabase(`SELECT * FROM Transaccions WHERE token='${token}'`)
+          if(same.length==0){
+            break
+          }
+          token=utils.makeToken(255)
+        }
+        await utils.queryDatabase(`INSERT INTO Transaccions (token,Desti,Quantitat,TimeSetup) VALUES('${token}','${phone}','${amount}','${now}' )`)
+        result = { status: "OK", result: "Payment Set!" }
+      } catch (error) {
+        console.log("setupPayment#ERROR");
+        console.log(error);
+        result = { status: "KO", result: "Connection to database error" }
+      }
+    } 
+
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    await utils.wait(1500)
+    
+  } catch (error) {
+    console.log(error);
+    result = { status: "KO", result: "Connection to database error" }
+  }
+  res.end(JSON.stringify(result))
+
 }
+
+
 
 module.exports = { test,getProfiles,router }

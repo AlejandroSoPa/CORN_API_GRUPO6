@@ -6,6 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "date-and-time": "^2.4.2",
     "express": "latest",
     "forever": "^4.0.3",
     "mysql2": "^3.0.1",
