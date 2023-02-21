@@ -15,14 +15,16 @@ router.post('/setup_payment',setup_payment)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
-    var test = await utils.queryDatabase("SELECT * FROM Usuaris;")
+    var test = await utils.queryDatabase("SELECT * FROM Transaccions;")
         await utils.wait(1500)
         if (test.length > 0) {
           let filtered={}
           test.forEach(element => {
-            filtered[element.phone]=element;
+            
+            filtered[element.TimeSetup]=element;
           });
           result = { status: "OK", result: [filtered] }
+          // result = { status: "OK", result: test }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
       console.log(utils.makeToken(255));
@@ -135,8 +137,7 @@ async function setup_payment(req,res){
     
     if (data.length > 0) {
       try {
-        let now = new Date();
-        now= date.format(now,'YYYY/MM/DD HH:mm:ss');
+        let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
         console.log(now);
         let token=utils.makeToken(255)
         while (true) {
@@ -146,7 +147,7 @@ async function setup_payment(req,res){
           }
           token=utils.makeToken(255)
         }
-        await utils.queryDatabase(`INSERT INTO Transaccions (token,Desti,Quantitat,TimeSetup) VALUES('${token}','${phone}','${amount}','${now}' )`)
+        await utils.queryDatabase(`INSERT INTO Transaccions (token,Desti,Quantitat,TimeSetup,Accepted) VALUES('${token}','${phone}','${amount}','${now}',0)`)
         result = { status: "OK", result: "Payment Set!" }
       } catch (error) {
         console.log("setupPayment#ERROR");

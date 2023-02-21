@@ -43,4 +43,11 @@ function wait (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-module.exports = { queryDatabase,makeToken,wait }
+function toLocalTime(time) {
+    var d = new Date(time);
+    var offset = (new Date().getTimezoneOffset() / 60) * -1;
+    var n = new Date(d.getTime() + offset);
+    return n;
+};
+
+module.exports = { queryDatabase,makeToken,wait,toLocalTime }
