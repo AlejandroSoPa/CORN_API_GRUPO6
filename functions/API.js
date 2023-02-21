@@ -12,6 +12,8 @@ router.post('/get_profiles',getProfiles)
 router.post('/get_profile',getProfile)
 router.post('/singup',singup)
 router.post('/setup_payment',setup_payment)
+router.post('/start_payment',start_payment)
+router.post('/finish_payment',finish_payment)
 
 async function test (req,res){
     let result = { status: "KO", result: "Unkown type" }
@@ -138,7 +140,6 @@ async function setup_payment(req,res){
     if (data.length > 0) {
       try {
         let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
-        console.log(now);
         let token=utils.makeToken(255)
         while (true) {
           let same=await utils.queryDatabase(`SELECT * FROM Transaccions WHERE token='${token}'`)
@@ -148,7 +149,7 @@ async function setup_payment(req,res){
           token=utils.makeToken(255)
         }
         await utils.queryDatabase(`INSERT INTO Transaccions (token,Desti,Quantitat,TimeSetup,Accepted) VALUES('${token}','${phone}','${amount}','${now}',0)`)
-        result = { status: "OK", result: "Payment Set!" }
+        result = { status: "OK", result: token }
       } catch (error) {
         console.log("setupPayment#ERROR");
         console.log(error);
@@ -167,6 +168,131 @@ async function setup_payment(req,res){
 
 }
 
+async function start_payment(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  let phone
+  
+  if(!receivedPOST.phone||!receivedPOST.token){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
 
+  let token=receivedPOST.token
+  
+  try {
+    phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
+
+  try {
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
+    
+    if (data.length == 0) {
+      return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+    }
+
+    var transacction= await utils.queryDatabase(`SELECT * FROM Transaccions WHERE token='${token}';`)
+
+    if(transacction.length==0){
+      return res.end(JSON.stringify({ status: "KO", result: "Token is invalid" }))
+    }
+
+    result={ status: "OK", result: transacction[0] }
+
+  } catch (error) {
+      console.log("startPayment#ERROR");
+      console.log(error);
+      result = { status: "KO", result: "Connection to database error" }
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json' })
+  await utils.wait(1500)
+  res.end(JSON.stringify(result))
+}
+
+async function finish_payment(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  let phone
+  
+  if(!receivedPOST.phone||!receivedPOST.token||!receivedPOST.accept||!receivedPOST.amount){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+
+  let token=receivedPOST.token
+  
+  try {
+    phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
+
+  try {
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
+    
+    if (data.length == 0) {
+      return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+    }
+
+    data=data[0]
+
+    var transacction= await utils.queryDatabase(`SELECT * FROM Transaccions WHERE token='${token}';`)
+
+    if(transacction.length==0){
+      return res.end(JSON.stringify({ status: "KO", result: "Token is invalid" }))
+    }
+
+    transacction=transacction[0]
+
+    if(transacction.Accepted==1){
+      return res.end(JSON.stringify({ status: "KO", result: "This Transacction is already acepted" }))
+    }
+
+    if(transacction.quantitat!=receivedPOST.amount){
+
+    }
+    
+    if(transacction.quantitat>data.wallet){
+      return res.end(JSON.stringify({ status: "KO", result: "Cant pay that" }))
+    }
+
+    let desti
+    try {
+      console.log(transacction.Desti);
+      desti=Number.parseInt(transacction.Desti)
+      console.log(desti);
+    } catch (error) {
+      return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
+    }
+
+    var data2 = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${desti}';`)
+    
+    if (data2.length == 0) {
+      return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
+    }
+    data2=data2[0]
+
+    if(data.phone==data2.phone){
+      return res.end(JSON.stringify({ status: "KO", result: "Cant pay that, youre the owner!" }))
+    }
+
+    let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
+
+    await utils.queryDatabase(`UPDATE Transaccions SET Origen=${phone},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${data.wallet - transacction.Quantitat} WHERE phone=${phone}`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${data2.wallet + transacction.Quantitat} WHERE phone=${data2.phone}`)
+
+    result = { status: "OK", result: "TRANSACTION COMPLETED" }
+
+  } catch (error) {
+      console.log("startPayment#ERROR");
+      console.log(error);
+      result = { status: "KO", result: "Connection to database error" }
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json' })
+  await utils.wait(1500)
+  res.end(JSON.stringify(result))
+
+}
 
 module.exports = { test,getProfiles,router }
