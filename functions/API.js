@@ -86,8 +86,9 @@ async function singup(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
 
+  let phone
   try {
-    let phone=Number.parseInt(receivedPOST.phone)
+    phone=Number.parseInt(receivedPOST.phone)
   } catch (error) {
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
@@ -106,6 +107,7 @@ async function singup(req,res){
     await utils.wait(1500)
     
   } catch (error) {
+    console.log(error);
     result = { status: "KO", result: "Connection to database error" }
   }
   res.end(JSON.stringify(result))
