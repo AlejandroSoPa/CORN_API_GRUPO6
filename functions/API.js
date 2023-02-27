@@ -90,6 +90,7 @@ async function singup(req,res){
   try {
     phone=Number.parseInt(receivedPOST.phone)
   } catch (error) {
+    console.log("phone invalid");
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
