@@ -98,6 +98,7 @@ async function singup(req,res){
   }
 
   if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  console.log(phone);
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
