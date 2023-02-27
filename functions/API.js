@@ -8,9 +8,9 @@ var express = require('express');
 var router = express.Router();
 const date = require('date-and-time')
 
+router.post('/singup',singup)
 router.post('/get_profiles',getProfiles)
 router.post('/get_profile',getProfile)
-router.post('/singup',singup)
 router.post('/setup_payment',setup_payment)
 router.post('/start_payment',start_payment)
 router.post('/finish_payment',finish_payment)
@@ -29,7 +29,7 @@ async function test (req,res){
           // result = { status: "OK", result: test }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' })
-      console.log(utils.makeToken(255));
+      // console.log(utils.makeToken(255));
     res.end(JSON.stringify(result))
 }
 
