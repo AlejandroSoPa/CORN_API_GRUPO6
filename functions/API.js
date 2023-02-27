@@ -146,6 +146,8 @@ async function setup_payment(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Wrong amount" }))
   }
 
+  if(Number.isNaN(amount)) return res.end(JSON.stringify({ status: "KO", result: "Wrong amount" }))
+
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
     
@@ -265,7 +267,7 @@ async function finish_payment(req,res){
     }
 
     if(transacction.quantitat!=receivedPOST.amount){
-
+      return res.end(JSON.stringify({ status: "KO", result: "Transacction error on quantity" }))
     }
     
     if(transacction.quantitat>data.wallet){
