@@ -266,7 +266,7 @@ async function finish_payment(req,res){
       return res.end(JSON.stringify({ status: "KO", result: "This Transacction is already acepted" }))
     }
 
-    if(transacction.quantitat!=receivedPOST.amount){
+    if(Number.parseInt(transacction.quantitat) != Number.parseInt(receivedPOST.amount)){
       return res.end(JSON.stringify({ status: "KO", result: "Transacction error on quantity" }))
     }
     
