@@ -63,7 +63,7 @@ async function getProfile(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
-  if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(phone==NaN) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone=${phone};`)
@@ -97,8 +97,7 @@ async function singup(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
-  if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
-  console.log(phone);
+  if(phone==NaN) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
@@ -139,7 +138,7 @@ async function setup_payment(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
-  if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(phone==NaN) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
     amount=Number.parseInt(receivedPOST.amount)
@@ -198,7 +197,7 @@ async function start_payment(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
-  if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(phone==NaN) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
@@ -242,7 +241,7 @@ async function finish_payment(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
   }
 
-  if(phone==null) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(phone==NaN) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${phone}';`)
