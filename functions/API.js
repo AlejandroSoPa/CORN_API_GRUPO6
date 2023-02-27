@@ -296,8 +296,8 @@ async function finish_payment(req,res){
     let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
 
     await utils.queryDatabase(`UPDATE Transaccions SET Origen=${phone},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${data.wallet - transacction.Quantitat} WHERE phone=${phone}`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${data2.wallet + transacction.Quantitat} WHERE phone=${data2.phone}`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE phone=${phone}`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE phone=${data2.phone}`)
 
     result = { status: "OK", result: "TRANSACTION COMPLETED" }
 
