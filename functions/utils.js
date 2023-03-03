@@ -4,6 +4,7 @@ const post = require('../post.js')
 const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
 var express = require('express');
+var bcrypt = require("bcryptjs");
 
 function makeToken(length) {
     let result = '';
@@ -50,4 +51,22 @@ function toLocalTime(time) {
     return n;
 };
 
-module.exports = { queryDatabase,makeToken,wait,toLocalTime }
+async function encriptPassword(passwd){
+  let salt=await bcrypt.genSalt(10)
+  let hash=await bcrypt.hash(passwd,salt)
+  return hash
+}
+
+async function validateSession(token){
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${token}';`)
+    if (data.length > 0) {
+      return true
+    }
+  } catch (error) {
+    return false
+  }
+  return false
+}
+
+module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession }
