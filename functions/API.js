@@ -195,25 +195,27 @@ async function transactionDetailsByUser(req,res){
 
   try {
     var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${phone} OR Desti=${phone};`)
-    let endResults={};
+    let endResults=[];
     if (data.length > 0) {
       data.forEach(element => {
-        if(!endResults[element.token]){
+        if(element.Origen && element.Desti){
+
           if(element.Origen==phone){
-            endResults[element.token]={
-              text:"Has transferit:"+element.amount+" € al telefon: "+element.Desti,
+            endResults.push({
+              text:"Has transferit: "+element.Quantitat+" al telefon: "+element.Desti,
               dataJson:element
-            }
+            })
           }
           else{
-            endResults[element.token]={
-              text:"Has rebut:"+element.amount+" € del telefon: "+element.Origen,
+            endResults.push({
+              text:"Has rebut: "+element.Quantitat+" del telefon: "+element.Origen,
               dataJson:element
-            }
+            })
           }
+        }
           
         }
-      });
+      );
       result = { status: "OK", result: endResults }
     }
     await utils.wait(1500)
