@@ -15,6 +15,7 @@ router.post('/get_profiles',getProfiles)
 router.post('/get_profile',getProfile)
 router.post('/login',login)
 router.post('/singup',singup)
+router.post('/transaccions',transactionDetailsByUser)
 // VALIDATE SESSION TOKEN
 router.use('',validateSession)
 // PROTECTED BLOCK:
@@ -176,6 +177,52 @@ async function login(req,res){
   }
   res.writeHead(200, { 'Content-Type': 'application/json' })
   await utils.wait(1500)
+  res.end(JSON.stringify(result))
+}
+
+async function transactionDetailsByUser(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
+  let phone
+  try {
+     phone=Number.parseInt(receivedPOST.phone)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  }
+
+  if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+
+  try {
+    var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${phone} OR Desti=${phone};`)
+    let endResults={};
+    if (data.length > 0) {
+      data.forEach(element => {
+        if(!endResults[element.token]){
+          if(element.Origen==phone){
+            endResults[element.token]={
+              text:"Has transferit:"+element.amount+" € al telefon: "+element.Desti,
+              dataJson:element
+            }
+          }
+          else{
+            endResults[element.token]={
+              text:"Has rebut:"+element.amount+" € del telefon: "+element.Origen,
+              dataJson:element
+            }
+          }
+          
+        }
+      });
+      result = { status: "OK", result: endResults }
+    }
+    await utils.wait(1500)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    
+  } catch (error) {
+    console.log(error);
+    result = { status: "KO", result: "Connection to database error" }
+  }
   res.end(JSON.stringify(result))
 }
 
