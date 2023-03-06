@@ -165,7 +165,7 @@ async function login(req,res){
           }
           else{session=utils.makeToken(30)}
         }
-        await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE phone='${phone}';`)
+        await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE email='${receivedPOST.email}';`)
         result={ status: "OK", result: session,data:temp[0] }
       }
       else{
