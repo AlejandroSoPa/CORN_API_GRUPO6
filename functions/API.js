@@ -159,6 +159,7 @@ async function login(req,res){
       if(pass==true){
         let session=utils.makeToken(30)
         await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE email='${receivedPOST.email}';`)
+        let temp=await utils.queryDatabase(`SELECT * FROM Usuaris Where session_token = '${session}' AND email='${receivedPOST.email}';`)
         result={ status: "OK", result: session,data:temp[0] }
       }
       else{
