@@ -140,7 +140,7 @@ async function login(req,res){
   let result = { status: "KO", result: "Invalid param" }
 
   if(receivedPOST.session){
-    let pass=await utils.validateSession(received.session)
+    let pass=await utils.validateSession(receivedPOST.session)
     if(pass==true) return res.end(JSON.stringify({ status: "OK", result: "TOKEN OK!" }))
   }
 
