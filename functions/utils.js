@@ -23,10 +23,10 @@ function queryDatabase (query) {
 
     return new Promise((resolve, reject) => {
       var connection = mysql.createConnection({
-        host: process.env.MYSQLHOST || "containers-us-west-114.railway.app",
-        port: process.env.MYSQLPORT || 7464,
+        host: process.env.MYSQLHOST || "containers-us-west-183.railway.app",
+        port: process.env.MYSQLPORT || 6096,
         user: process.env.MYSQLUSER || "root",
-        password: process.env.MYSQLPASSWORD || "Qz21TSQiclO7oIdZmssF",
+        password: process.env.MYSQLPASSWORD || "FV5xnxVauvMceefDqfMD",
         database: process.env.MYSQLDATABASE || "railway"
       });
   
