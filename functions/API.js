@@ -110,7 +110,7 @@ async function singup(req,res){
   if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}' OR email='${receivedPOST.email}';`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone=${receivedPOST.phone} OR email='${receivedPOST.email}';`)
     
     if (data.length > 0) {
       result = { status: "KO", result: "User already exists" }
