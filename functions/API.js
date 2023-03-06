@@ -121,7 +121,7 @@ async function singup(req,res){
       let session=utils.makeToken(30)
       await utils.queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email,password,session_token) VALUES('${phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}','${passwd}','${session}');`)
       data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
-      result = { status: "OK", result: session,data:data }
+      result = { status: "OK", result: session,data:data[0] }
     }
     res.writeHead(200, { 'Content-Type': 'application/json' })
     await utils.wait(1500)
