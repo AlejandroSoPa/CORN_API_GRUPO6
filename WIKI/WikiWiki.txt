@@ -1,0 +1,19 @@
+La base de dades consta de les seguents taules: Usuaris i Transaccions.
+
+La taula Usuaris consta de les seguents columnes: 
+	- phone: El telefon del usuari. Es unic y per tant no pot.
+	- email: Correu electronic del usuari.
+	- name: Nom del usuari.
+	- surname: Cognoms del usuari.
+	- wallet: Cartera del usuari. Quan es crea un nou usuari aquest valor s'inicialitza a 50.
+	- session_token: Es el token que s'autogenera. Una cadena 30 caracters: Majuscules, minuscules y caracters especials
+	- password: Contrasenya encriptada per a la seguretat dels nostres usuaris.
+	
+La taula Transaccions consta de les seguents columnes:
+	- token: Es el token que s'autogenera. Una cadena de 250 caracters: Majuscules, minuscules y caracters especials. 
+	- Origen: Es el telefon que pagara el cobrament finalitzant amb la transaccio.
+	- Desti: Es el telefon que creara el cobrament iniciant amb la transaccio.
+	- Quantitat: Seran els diners a pagar en el cobrament.
+	- Accepted: Un boolean. Si esta en estat 1 el cobrament se ha realitzat correctament.
+	- TimeSetup: Un datetime que indica quan ha iniciat la transaccio.
+	- TimeAccept: Un datetime que indica quan ha finalitzat la transaccio.
