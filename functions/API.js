@@ -141,7 +141,8 @@ async function login(req,res){
 
   if(receivedPOST.session){
     let pass=await utils.validateSession(receivedPOST.session)
-    if(pass==true) return res.end(JSON.stringify({ status: "OK", result: "TOKEN OK!" }))
+    let temp1=await utils.queryDatabase(`SELECT * FROM Usuaris Where session_token = '${receivedPOST.session}';`)
+    if(pass==true) return res.end(JSON.stringify({ status: "OK", result: "TOKEN OK!",data:temp1[0] }))
   }
 
   if(!receivedPOST.password||!receivedPOST.email){
