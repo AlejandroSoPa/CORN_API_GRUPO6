@@ -158,13 +158,6 @@ async function login(req,res){
       var pass=await bcrypt.compare(receivedPOST.password,data.password)
       if(pass==true){
         let session=utils.makeToken(30)
-        while(true){
-          let temp=await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
-          if(temp.length==0){
-            break
-          }
-          else{session=utils.makeToken(30)}
-        }
         await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE email='${receivedPOST.email}';`)
         result={ status: "OK", result: session,data:temp[0] }
       }
