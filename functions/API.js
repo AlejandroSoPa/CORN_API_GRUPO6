@@ -118,9 +118,10 @@ async function singup(req,res){
       
       var passwd=await utils.encriptPassword(receivedPOST.password)
       if(!passwd) return res.end(JSON.stringify({ status: "KO", result: "ERROR parse password" }))
-      await utils.queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email,password) VALUES('${phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}','${passwd}');`)
+      let session=utils.makeToken(30)
+      await utils.queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email,password,session_token) VALUES('${phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}','${passwd}','${session}');`)
       data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
-      result = { status: "OK", result: data }
+      result = { status: "OK", result: session,data:data }
     }
     res.writeHead(200, { 'Content-Type': 'application/json' })
     await utils.wait(1500)
@@ -137,6 +138,11 @@ async function singup(req,res){
 async function login(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
+
+  if(receivedPOST.session){
+    let pass=await utils.validateSession(received.session)
+    if(pass==true) return res.end(JSON.stringify({ status: "OK", result: "TOKEN OK!" }))
+  }
 
   if(!receivedPOST.password||!receivedPOST.email){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
@@ -160,7 +166,7 @@ async function login(req,res){
           else{session=utils.makeToken(30)}
         }
         await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE phone='${phone}';`)
-        result={ status: "OK", result: session }
+        result={ status: "OK", result: session,data:temp[0] }
       }
       else{
         result={ status: "KO", result: "Password incorrect" }
