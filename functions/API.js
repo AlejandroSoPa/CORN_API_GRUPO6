@@ -17,11 +17,11 @@ router.post('/login',login)
 router.post('/singup',singup)
 router.post('/transaccions',transactionDetailsByUser)
 // VALIDATE SESSION TOKEN
-router.use('',validateSession)
+// router.use('',validateSession)
 // PROTECTED BLOCK:
-router.post('/setup_payment',setup_payment)
-router.post('/start_payment',start_payment)
-router.post('/finish_payment',finish_payment)
+router.post('/setup_payment',validateSession,setup_payment)
+router.post('/start_payment',validateSession,start_payment)
+router.post('/finish_payment',validateSession,finish_payment)
 
 // NON PROTECTED BLOCK:
 
