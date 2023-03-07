@@ -118,7 +118,8 @@ async function singup(req,res){
       
       var passwd=await utils.encriptPassword(receivedPOST.password)
       if(!passwd) return res.end(JSON.stringify({ status: "KO", result: "ERROR parse password" }))
-      let session=utils.makeToken(30)
+      let session=await utils.uniqueToken()
+      if(!session) return res.end(JSON.stringify({ status: "KO", result: "ERROR make token" }))
       await utils.queryDatabase(`INSERT INTO Usuaris (phone,name,surname,email,password,session_token) VALUES('${phone}','${receivedPOST.name}','${receivedPOST.surname}','${receivedPOST.email}','${passwd}','${session}');`)
       data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${receivedPOST.phone}';`)
       result = { status: "OK", result: session,data:data[0] }
@@ -158,7 +159,8 @@ async function login(req,res){
       if(!data.password) return res.end(JSON.stringify({ status: "KO", result: "Password empty on database" }))
       var pass=await bcrypt.compare(receivedPOST.password,data.password)
       if(pass==true){
-        let session=utils.makeToken(30)
+        let session=await utils.uniqueToken()
+        if(!session) return res.end(JSON.stringify({ status: "KO", result: "ERROR make token" }))
         await utils.queryDatabase(`UPDATE Usuaris SET session_token = '${session}' WHERE email='${receivedPOST.email}';`)
         let temp=await utils.queryDatabase(`SELECT * FROM Usuaris Where session_token = '${session}' AND email='${receivedPOST.email}';`)
         result={ status: "OK", result: session,data:temp[0] }
