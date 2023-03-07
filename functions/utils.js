@@ -69,4 +69,18 @@ async function validateSession(token){
   return false
 }
 
-module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession }
+async function uniqueToken(){
+  let tok=makeToken(30);
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${tok}';`)
+    if (data.length > 0) {
+      return await uniqueToken
+    }
+  } catch (error) {
+    console.log(error);
+    return false
+  }
+  return tok
+}
+
+module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken }
