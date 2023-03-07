@@ -392,7 +392,7 @@ async function finish_payment(req,res){
     await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE phone=${data.phone}`)
     await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE phone=${data2.phone}`)
     await utils.queryDatabase(`COMMIT;`)
-    await utils.queryDatabase(`END TRANSACTION;`)
+    // await utils.queryDatabase(`END TRANSACTION;`)
     await utils.queryDatabase(`SET AUTOCOMMIT=1`)
 
     result = { status: "OK", result: "TRANSACTION COMPLETED" }
