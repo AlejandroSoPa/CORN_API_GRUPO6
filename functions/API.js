@@ -226,7 +226,7 @@ async function transactionDetailsByUser(req,res){
 
           if(element.Origen==user.id){
             var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Desti}'`)
-            console.log(user2);
+            user2=user2[0]
             endResults.push({
               text:"Has transferit: "+element.Quantitat+" al telefon: "+user2.phone+" del usuari: "+user2.name,
               dataJson:element
@@ -234,7 +234,7 @@ async function transactionDetailsByUser(req,res){
           }
           else{
             var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Origen}'`)
-            console.log(user2);
+            user2=user2[0]
             endResults.push({
               text:"Has rebut: "+element.Quantitat+" del telefon: "+user2.phone+" del usuari: "+user2.name,
               dataJson:element
