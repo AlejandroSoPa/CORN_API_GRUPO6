@@ -14,6 +14,7 @@ var recivedJson=null
 router.post('/get_profiles',getProfiles)
 router.post('/get_profile',getProfile)
 router.post('/login',login)
+router.post('/logout',logout)
 router.post('/singup',singup)
 router.post('/transaccions',transactionDetailsByUser)
 // VALIDATE SESSION TOKEN
@@ -41,6 +42,21 @@ async function test (req,res){
         res.writeHead(200, { 'Content-Type': 'application/json' })
       // console.log(utils.makeToken(255));
     res.end(JSON.stringify(result))
+}
+
+async function logout(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  if(!receivedPOST.session){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  try {
+    await utils.queryDatabase(`UPDATE Usuaris SET session_token=null WHERE session_token=${receivedPOST.session} `)
+    return res.end(JSON.stringify({ status: "OK", result: "logout" }))
+  } catch (error) {
+    console.log(error);
+    return res.end(JSON.stringify({ status: "KO", result: "Database error" }))
+  }
 }
 
 // Fetch all profiles
