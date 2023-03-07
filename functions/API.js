@@ -387,7 +387,7 @@ async function finish_payment(req,res){
 
     let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
     await utils.queryDatabase(`SET AUTOCOMMIT=0`)
-    await utils.queryDatabase(`BEGIN TRANSACTION;`)
+    await utils.queryDatabase(`START TRANSACTION;`)
     await utils.queryDatabase(`UPDATE Transaccions SET Origen=${data.phone},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
     await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE phone=${phone}`)
     await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE phone=${data2.phone}`)
