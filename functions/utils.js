@@ -4,6 +4,7 @@ const post = require('../post.js')
 const { v4: uuidv4 } = require('uuid')
 const mysql=require('mysql2')
 var express = require('express');
+var bcrypt = require("bcryptjs");
 
 function makeToken(length) {
     let result = '';
@@ -22,10 +23,10 @@ function queryDatabase (query) {
 
     return new Promise((resolve, reject) => {
       var connection = mysql.createConnection({
-        host: process.env.MYSQLHOST || "containers-us-west-114.railway.app",
-        port: process.env.MYSQLPORT || 7464,
+        host: process.env.MYSQLHOST || "containers-us-west-183.railway.app",
+        port: process.env.MYSQLPORT || 6096,
         user: process.env.MYSQLUSER || "root",
-        password: process.env.MYSQLPASSWORD || "Qz21TSQiclO7oIdZmssF",
+        password: process.env.MYSQLPASSWORD || "FV5xnxVauvMceefDqfMD",
         database: process.env.MYSQLDATABASE || "railway"
       });
   
@@ -50,4 +51,36 @@ function toLocalTime(time) {
     return n;
 };
 
-module.exports = { queryDatabase,makeToken,wait,toLocalTime }
+async function encriptPassword(passwd){
+  let salt=await bcrypt.genSalt(10)
+  let hash=await bcrypt.hash(passwd,salt)
+  return hash
+}
+
+async function validateSession(token){
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${token}';`)
+    if (data.length > 0) {
+      return true
+    }
+  } catch (error) {
+    return false
+  }
+  return false
+}
+
+async function uniqueToken(){
+  let tok=makeToken(30);
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${tok}';`)
+    if (data.length > 0) {
+      return await uniqueToken
+    }
+  } catch (error) {
+    console.log(error);
+    return false
+  }
+  return tok
+}
+
+module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken }

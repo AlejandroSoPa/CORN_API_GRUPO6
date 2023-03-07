@@ -6,6 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "date-and-time": "^2.4.2",
     "express": "latest",
     "forever": "^4.0.3",
