@@ -51,7 +51,7 @@ async function logout(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
   try {
-    await utils.queryDatabase(`UPDATE Usuaris SET session_token=null WHERE session_token=${receivedPOST.session} `)
+    await utils.queryDatabase(`UPDATE Usuaris SET session_token=null WHERE session_token='${receivedPOST.session}' `)
     return res.end(JSON.stringify({ status: "OK", result: "logout" }))
   } catch (error) {
     console.log(error);
