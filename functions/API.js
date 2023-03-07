@@ -213,28 +213,35 @@ async function transactionDetailsByUser(req,res){
   if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${phone} OR Desti=${phone};`)
+    var user=await utils.queryDatabase(`SELECT * FROM Usuaris where phone='${phone}'`)
+    if (user.length > 0) {
+      user=user[0];
+    }
+    else{return res.end(JSON.stringify({ status: "KO", result: "user invalid" }))}
+    var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${user.id} OR Desti=${user.id};`)
     let endResults=[];
     if (data.length > 0) {
-      data.forEach(element => {
+      await Promise.all(data.map(async element => {
         if(element.Origen && element.Desti){
 
-          if(element.Origen==phone){
+          if(element.Origen==user.id){
+            var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Desti}'`)
             endResults.push({
-              text:"Has transferit: "+element.Quantitat+" al telefon: "+element.Desti,
+              text:"Has transferit: "+element.Quantitat+" al telefon: "+user2.phone+" del usuari: "+user2.name,
               dataJson:element
             })
           }
           else{
+            var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Origen}'`)
             endResults.push({
-              text:"Has rebut: "+element.Quantitat+" del telefon: "+element.Origen,
+              text:"Has rebut: "+element.Quantitat+" del telefon: "+user2.phone+" del usuari: "+user2.name,
               dataJson:element
             })
           }
         }
           
-        }
-      );
+        }))
+      
       result = { status: "OK", result: endResults }
     }
     await utils.wait(1500)
@@ -273,7 +280,7 @@ async function setup_payment(req,res){
   }
   
   var datatemp = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
-  phone=datatemp[0].phone
+  phone=datatemp[0].id
   try {
     amount=Number.parseInt(receivedPOST.amount)
   } catch (error) {
@@ -323,7 +330,7 @@ async function start_payment(req,res){
   }
 
   var datatemp = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
-  phone=datatemp[0].phone
+  phone=datatemp[0].id
 
   let token=receivedPOST.token
   
@@ -390,7 +397,7 @@ async function finish_payment(req,res){
       return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
     }
 
-    var data2 = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${desti}';`)
+    var data2 = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id='${desti}';`)
     
     if (data2.length == 0) {
       return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
@@ -404,9 +411,9 @@ async function finish_payment(req,res){
     let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
     await utils.queryDatabase(`SET AUTOCOMMIT=0`)
     await utils.queryDatabase(`START TRANSACTION;`)
-    await utils.queryDatabase(`UPDATE Transaccions SET Origen=${data.phone},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE phone=${data.phone}`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE phone=${data2.phone}`)
+    await utils.queryDatabase(`UPDATE Transaccions SET Origen=${data.id},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE id=${data.id}`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE id=${data2.id}`)
     await utils.queryDatabase(`COMMIT;`)
     // await utils.queryDatabase(`END TRANSACTION;`)
     await utils.queryDatabase(`SET AUTOCOMMIT=1`)
