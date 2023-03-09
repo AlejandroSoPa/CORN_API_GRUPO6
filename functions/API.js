@@ -12,6 +12,7 @@ var bcrypt = require("bcryptjs");
 var recivedJson=null
 // NON PROTECTED BLOCK:
 router.post('/get_profiles',getProfiles)
+router.post('/get_filtered_profiles',getFilteredProfiles)
 router.post('/get_profile',getProfile)
 router.post('/login',login)
 router.post('/logout',logout)
@@ -61,11 +62,69 @@ async function logout(req,res){
 
 // Fetch all profiles
 async function getProfiles(req,res){
-  console.log("getprofiles");
     let result = { status: "KO", result: "Unkown type" }
     try {
       
       var data = await utils.queryDatabase("SELECT * FROM Usuaris;")
+      await utils.wait(1500)
+      if (data.length > 0) {
+        result = { status: "OK", result: data }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+    } catch (error) {
+      result = { status: "KO", result: "Unkown type" }
+    }
+    res.end(JSON.stringify(result))
+}
+
+// fetch filtered profiles
+async function getFilteredProfiles(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  let query="SELECT * FROM Usuaris "
+  let ands=0;
+
+  // if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
+  if(receivedPOST.min2||receivedPOST.max2){
+    query="SELECT u.*,COUNT(t.token) AS transaccions FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origin=u.id "
+  }
+
+  if(receivedPOST.min2||receivedPOST.max2||receivedPOST.min1||receivedPOST.max1||receivedPOST.status){
+  query+="WHERE "
+  }
+
+  if(receivedPOST.min1 ){
+    query+=`wallet>${receivedPOST.min1} `
+    ands++
+  }
+  if(receivedPOST.max1 ){
+    if(ands>0){query+="AND "}
+    query+=`wallet<${receivedPOST.min1} `
+    ands++
+  }
+
+  // if(receivedPOST.min2 ){
+  //   if(ands>0){query+="AND "}
+  //   query+=`wallet<${receivedPOST.min2} `
+  //   ands++
+  //   inner++
+  // }
+  // if(receivedPOST.max2 ){
+  //   if(ands>0){query+="AND "}
+  //   query+=`wallet<${receivedPOST.min1} `
+    
+  //   ands++
+  //   inner++
+  // }
+
+  if(receivedPOST.status ){
+    if(ands>0){query+="AND "}
+    query+=`status=${receivedPOST.status} `
+  }
+  query+=";"
+    try {
+      
+      var data = await utils.queryDatabase(query)
       await utils.wait(1500)
       if (data.length > 0) {
         result = { status: "OK", result: data }
