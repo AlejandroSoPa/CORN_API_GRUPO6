@@ -102,7 +102,7 @@ async function getFilteredProfiles(req,res){
     query+=`wallet<${receivedPOST.min1} `
     ands++
   }
-
+ 
   // if(receivedPOST.min2 ){
   //   if(ands>0){query+="AND "}
   //   query+=`wallet<${receivedPOST.min2} `
