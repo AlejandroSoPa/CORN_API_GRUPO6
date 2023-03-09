@@ -86,44 +86,52 @@ async function getFilteredProfiles(req,res){
 
   // if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
   if(receivedPOST.min2||receivedPOST.max2){
-    query="SELECT u.*,COUNT(t.token) AS transaccions FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origin=u.id "
+    query="SELECT u.*,COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id "
   }
 
-  if(receivedPOST.min2||receivedPOST.max2||receivedPOST.min1||receivedPOST.max1||receivedPOST.status){
+  if(receivedPOST.min1||receivedPOST.max1||receivedPOST.status){
   query+="WHERE "
   }
 
   if(receivedPOST.min1 ){
-    query+=`wallet>${receivedPOST.min1} `
+    query+=`wallet>=${receivedPOST.min1} `
     ands++
   }
   if(receivedPOST.max1 ){
     if(ands>0){query+="AND "}
-    query+=`wallet<${receivedPOST.min1} `
+    query+=`wallet<=${receivedPOST.max1} `
     ands++
   }
  
-  // if(receivedPOST.min2 ){
-  //   if(ands>0){query+="AND "}
-  //   query+=`wallet<${receivedPOST.min2} `
-  //   ands++
-  //   inner++
-  // }
-  // if(receivedPOST.max2 ){
-  //   if(ands>0){query+="AND "}
-  //   query+=`wallet<${receivedPOST.min1} `
-    
-  //   ands++
-  //   inner++
-  // }
-
   if(receivedPOST.status ){
     if(ands>0){query+="AND "}
     query+=`status=${receivedPOST.status} `
   }
+  if(receivedPOST.min2||receivedPOST.max2){
+    query+="GROUP BY u.id "
+  }
+  let having=0
+  if(receivedPOST.min2 ){
+    query+=`HAVING COUNT(t.Quantitat)>=${receivedPOST.min2} `
+    ands++
+    having++
+  }
+  if(receivedPOST.max2 ){
+    if(having>0){
+      query+=`AND COUNT(t.Quantitat)>=${receivedPOST.min2} `
+    }
+    else{
+
+      query+=`HAVING COUNT(t.Quantitat)<=${receivedPOST.max2} `
+    }
+    ands++
+    having++
+  }
   query+=";"
     try {
-      
+      // query="SELECT u.*, COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id GROUP BY u.id HAVING COUNT(t.Quantitat)>0;"
+      // query="SELECT u.*,COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id GROUP BY u.id AND HAVING COUNT(t.Quantitat)>=1 ;"
+      console.log(query);
       var data = await utils.queryDatabase(query)
       await utils.wait(1500)
       if (data.length > 0) {
@@ -131,6 +139,7 @@ async function getFilteredProfiles(req,res){
       }
       res.writeHead(200, { 'Content-Type': 'application/json' })
     } catch (error) {
+      console.log(error);
       result = { status: "KO", result: "Unkown type" }
     }
     res.end(JSON.stringify(result))
