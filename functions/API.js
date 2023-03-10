@@ -307,12 +307,21 @@ async function transactionDetailsByUser(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
   // change phone to id in desktop
-  if(!receivedPOST.id){return res.end(JSON.stringify(result))}
+  if(!receivedPOST.id && !receivedPOST.session){return res.end(JSON.stringify(result))}
   let id
-  try {
-     id=Number.parseInt(receivedPOST.id)
-  } catch (error) {
-    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+  if(!receivedPOST.session){
+    try {
+       id=Number.parseInt(receivedPOST.id)
+    } catch (error) {
+      return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+    }
+
+  } else{
+    let user=await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+    if(user.length==0){
+      return res.end(JSON.stringify({ status: "KO", result: "token is invalid" }))
+    }
+    id=user[0].id
   }
 
   if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
