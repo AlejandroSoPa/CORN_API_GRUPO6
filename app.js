@@ -25,7 +25,7 @@ process.on("SIGINT", () => {
   httpServer.close()
 })
 
-app.use('/test', api.test) // TEST ENDPOINT WITH GET
+app.get('/test', api.test) // TEST ENDPOINT WITH GET
 
 app.use('/API', api.router)
 
