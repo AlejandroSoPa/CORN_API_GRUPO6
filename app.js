@@ -7,7 +7,7 @@ const mysql=require('mysql2')
 const api=require('./functions/API.js')
 
 // Start HTTP server
-const app = express()
+const app = express.Router();
 
 // Set port number
 const port = process.env.PORT || 3000
