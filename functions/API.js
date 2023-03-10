@@ -317,7 +317,7 @@ async function transactionDetailsByUser(req,res){
     }
 
   } else{
-    let user=await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+    let user=await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
     if(user.length==0){
       return res.end(JSON.stringify({ status: "KO", result: "token is invalid" }))
     }
