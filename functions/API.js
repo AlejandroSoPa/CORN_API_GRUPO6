@@ -556,8 +556,15 @@ async function sendId(req,res){
   var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${received.session}';`)
   data=data[0]
 
-  let front=utils.uniqueImage("jpg")
-  let back=utils.uniqueImage("jpg")
+  const file1 = Buffer.from(receivedPOST.front, 'base64');
+  const file2 = Buffer.from(receivedPOST.back, 'base64');
+  try {
+    await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}',back='${file2}',status=2 WHERE id=${data.id};`)
+
+    return res.end(JSON.stringify({status:"OK",result:"files uploaded"}))
+  } catch (error) {
+    return res.end(JSON.stringify(result))
+  }
 
 }
 
