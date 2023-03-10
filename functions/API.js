@@ -131,9 +131,7 @@ async function getFilteredProfiles(req,res){
   }
   query+=";"
     try {
-      // query="SELECT u.*, COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id GROUP BY u.id HAVING COUNT(t.Quantitat)>0;"
-      // query="SELECT u.*,COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id GROUP BY u.id AND HAVING COUNT(t.Quantitat)>=1 ;"
-      console.log(query);
+      
       var data = await utils.queryDatabase(query)
       await utils.wait(1500)
       if (data.length > 0) {
@@ -311,18 +309,19 @@ async function login(req,res){
 async function transactionDetailsByUser(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
-  let phone
+  // change phone to id in desktop
+  if(!receivedPOST.id){return res.end(JSON.stringify(result))}
+  let id
   try {
-     phone=Number.parseInt(receivedPOST.phone)
+     id=Number.parseInt(receivedPOST.id)
   } catch (error) {
-    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
   }
 
-  if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var user=await utils.queryDatabase(`SELECT * FROM Usuaris where phone='${phone}'`)
+    var user=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${id}'`)
     if (user.length > 0) {
       user=user[0];
     }
@@ -338,7 +337,8 @@ async function transactionDetailsByUser(req,res){
             user2=user2[0]
             endResults.push({
               text:"Has transferit: "+element.Quantitat+" al telefon: "+user2.phone+" del usuari: "+user2.name,
-              dataJson:element
+              dataJson:element,
+              wallet:user.wallet
             })
           }
           else{
@@ -346,7 +346,8 @@ async function transactionDetailsByUser(req,res){
             user2=user2[0]
             endResults.push({
               text:"Has rebut: "+element.Quantitat+" del telefon: "+user2.phone+" del usuari: "+user2.name,
-              dataJson:element
+              dataJson:element,
+              wallet:user.wallet
             })
           }
         }
