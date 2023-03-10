@@ -80,4 +80,4 @@ async function uniqueToken(){
   return tok
 }
 
-module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken,uniqueImage }
+module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken }
