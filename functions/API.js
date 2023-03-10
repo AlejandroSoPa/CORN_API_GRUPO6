@@ -565,4 +565,4 @@ async function sendId(req,res){
 }
 
 
-module.exports = { router }
+module.exports = { router,test }
