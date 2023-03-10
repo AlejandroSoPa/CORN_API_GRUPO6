@@ -14,6 +14,7 @@ var recivedJson=null
 router.post('/get_profiles',getProfiles)
 router.post('/get_filtered_profiles',getFilteredProfiles)
 router.post('/get_profile',getProfile)
+router.post('/validate',validateUser)
 router.post('/login',login)
 router.post('/logout',logout)
 router.post('/singup',singup)
@@ -24,6 +25,7 @@ router.post('/transaccions',transactionDetailsByUser)
 router.post('/setup_payment',validateSession,setup_payment)
 router.post('/start_payment',validateSession,start_payment)
 router.post('/finish_payment',validateSession,finish_payment)
+router.post('/send_id',validateSession,sendId)
 
 // NON PROTECTED BLOCK:
 
@@ -149,18 +151,19 @@ async function getFilteredProfiles(req,res){
 async function getProfile(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
-  let phone
+  //change in desktop, we work with id now
+  if(!receivedPOST.id){return res.end(JSON.stringify(result))}
+  let id
   try {
-     phone=Number.parseInt(receivedPOST.phone)
+     id=Number.parseInt(receivedPOST.id)
   } catch (error) {
-    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
   }
 
-  if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone=${phone};`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id};`)
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -173,6 +176,44 @@ async function getProfile(req,res){
     result = { status: "KO", result: "Connection to database error" }
   }
   res.end(JSON.stringify(result))
+}
+
+// validate DNI
+async function validateUser(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  // change DESKTOP to work with id instead the phone
+  if(!receivedPOST.id||!receivedPOST.status){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  let id
+  try {
+     id=Number.parseInt(receivedPOST.id)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+  }
+
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+
+  let exists=await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id}`)
+
+  if(exists.length==0){return res.end(JSON.stringify({ status: "KO", result: "User dont exists" }))}
+
+  let status
+  try {
+     status=Number.parseInt(receivedPOST.status)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+  }
+
+  if(Number.isNaN(status)) return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+
+  if(status!=1 && status!=2 && status!=3 && status!=4){
+    return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+  }
+
+  await utils.queryDatabase(`UPDATE Usuaris SET status = '${status}' WHERE id='${id}';`)
+  return res.end(JSON.stringify({ status: "OK", result: "Status updated!" }))
+
 }
 
 // Create user
@@ -508,6 +549,19 @@ async function finish_payment(req,res){
 
 }
 
+async function sendId(req,res){
+  let result = { status: "KO", result: "Invalid param" }
+  
+  if(!received.front||!received.back){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${received.session}';`)
+  data=data[0]
+
+  let front=utils.uniqueImage("jpg")
+  let back=utils.uniqueImage("jpg")
+
+}
 
 
-module.exports = { test,getProfiles,router }
+module.exports = { router }

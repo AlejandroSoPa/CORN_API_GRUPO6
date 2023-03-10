@@ -83,4 +83,19 @@ async function uniqueToken(){
   return tok
 }
 
-module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken }
+// maybe extension not necessary
+async function uniqueImage(extension){
+  let tok=makeToken(30);
+  try {
+    var data = await queryDatabase(`SELECT * FROM Usuaris WHERE frontId='${tok}.${extension}' OR backId='${tok}.${extension}';`)
+    if (data.length > 0) {
+      return await uniqueImage(extension)
+    }
+  } catch (error) {
+    console.log(error);
+    return false
+  }
+  return tok+"."+extension
+}
+
+module.exports = { queryDatabase,makeToken,wait,toLocalTime,encriptPassword,validateSession,uniqueToken,uniqueImage }
