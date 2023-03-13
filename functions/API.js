@@ -575,7 +575,7 @@ async function sendId(req,res){
   if(!recivedJson.front && !recivedJson.back){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
-  var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
+  var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
   data=data[0]
 
   
