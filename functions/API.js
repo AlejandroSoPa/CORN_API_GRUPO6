@@ -572,16 +572,33 @@ async function finish_payment(req,res){
 async function sendId(req,res){
   let result = { status: "KO", result: "Invalid param" }
   
-  if(!received.front||!received.back){
+  if(!received.front && !received.back){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
   var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${received.session}';`)
   data=data[0]
 
-  const file1 = Buffer.from(receivedPOST.front, 'base64');
-  const file2 = Buffer.from(receivedPOST.back, 'base64');
+  
   try {
-    await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}',back='${file2}',status=2 WHERE id=${data.id};`)
+    if(received.front){
+      const file1 = Buffer.from(receivedPOST.front, 'base64');
+      if(!data.back){
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}' WHERE id=${data.id};`)
+      }else{
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}',status=2 WHERE id=${data.id};`)
+      }
+      
+    }
+    if(received.back){
+    const file2 = Buffer.from(receivedPOST.back, 'base64');
+    if(!data.front){
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}' WHERE id=${data.id};`)
+    }else{
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}',status=2 WHERE id=${data.id};`)
+    }
+    
+    }
+    
 
     return res.end(JSON.stringify({status:"OK",result:"files uploaded"}))
   } catch (error) {
