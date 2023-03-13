@@ -146,8 +146,21 @@ async function getFilteredProfiles(req,res){
 async function getProfile(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  //change in desktop, we work with id now
-  if(!receivedPOST.id){return res.end(JSON.stringify(result))}
+
+  if(receivedPOST.session){
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session=${receivedPOST.session};`)
+
+    await utils.wait(1500)
+    if (data.length > 0) {
+      result = { status: "OK", result: data[0] }
+      res.send(result)
+    }
+    else{
+      res.send(result)
+    }
+  }
+
+  if(!receivedPOST.id ){return res.end(JSON.stringify(result))}
   let id
   try {
      id=Number.parseInt(receivedPOST.id)
