@@ -153,10 +153,10 @@ async function getProfile(req,res){
     await utils.wait(1500)
     if (data.length > 0) {
       result = { status: "OK", result: data[0] }
-      res.send(result)
+      return res.send(result)
     }
     else{
-      res.send(result)
+      return res.send(result)
     }
   }
 
