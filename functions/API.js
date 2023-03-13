@@ -148,7 +148,19 @@ async function getProfile(req,res){
   let result = { status: "KO", result: "Invalid param" }
 
   if(receivedPOST.session){
-    var data = await utils.queryDatabase(`SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+
+    if(data[0].front){
+      var base64 = await fs.readFile(`../private/${data[0].front}`, { encoding: 'base64'})
+      data[0].front=base64
+
+    }
+    // TODO HERE
+    if(data[0].back){
+      var base64 = await fs.readFile(`../private/${data[0].back}`, { encoding: 'base64'})
+      data[0].back=base64
+
+    }
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -578,25 +590,37 @@ async function sendId(req,res){
   var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
   data=data[0]
 
+ 
+
+// Guardar les dades binaries en un arxiu (a la carpeta ‘private’ amb el nom original)
+  const path = "../private"
+  await fs.mkdir(path, { recursive: true }) // Crea el directori si no existeix
+  
+
   
   try {
     if(recivedJson.front){
       const file1 = Buffer.from(recivedJson.front, 'base64');
+      let name=utils.makeToken(20)
+      await fs.writeFile(`${path}/${name}`, file1)
       console.log(file1);
       if(!data.back){
-        await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}' WHERE id=${data.id};`)
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${name}' WHERE id=${data.id};`)
       }else{
-        await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}',status=2 WHERE id=${data.id};`)
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${name}',status=2 WHERE id=${data.id};`)
       }
       
     }
     if(recivedJson.back){
     const file2 = Buffer.from(recivedJson.back, 'base64');
+    let name=utils.makeToken(20)
+      await fs.writeFile(`${path}/${name}`, file2)
+      console.log(file2);
     console.log(file2);
     if(!data.front){
-      await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}' WHERE id=${data.id};`)
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${name}' WHERE id=${data.id};`)
     }else{
-      await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}',status=2 WHERE id=${data.id};`)
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${name}',status=2 WHERE id=${data.id};`)
     }
     
     }
