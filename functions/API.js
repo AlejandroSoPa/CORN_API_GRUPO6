@@ -160,7 +160,7 @@ async function getProfile(req,res){
       var base64 = await fs.readFile(`../private/${data[0].back}`, { encoding: 'base64'})
       data[0].back=base64
 
-    }
+    } 
 
     await utils.wait(1500)
     if (data.length > 0) {
