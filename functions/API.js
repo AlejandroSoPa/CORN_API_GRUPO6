@@ -572,16 +572,16 @@ async function finish_payment(req,res){
 async function sendId(req,res){
   let result = { status: "KO", result: "Invalid param" }
   
-  if(!received.front && !received.back){
+  if(!recivedJson.front && !recivedJson.back){
     return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
   }
-  var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${received.session}';`)
+  var data = await queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
   data=data[0]
 
   
   try {
-    if(received.front){
-      const file1 = Buffer.from(received.front, 'base64');
+    if(recivedJson.front){
+      const file1 = Buffer.from(recivedJson.front, 'base64');
       if(!data.back){
         await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}' WHERE id=${data.id};`)
       }else{
@@ -589,8 +589,8 @@ async function sendId(req,res){
       }
       
     }
-    if(received.back){
-    const file2 = Buffer.from(received.back, 'base64');
+    if(recivedJson.back){
+    const file2 = Buffer.from(recivedJson.back, 'base64');
     if(!data.front){
       await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}' WHERE id=${data.id};`)
     }else{
