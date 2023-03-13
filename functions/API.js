@@ -148,7 +148,7 @@ async function getProfile(req,res){
   let result = { status: "KO", result: "Invalid param" }
 
   if(receivedPOST.session){
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token=${receivedPOST.session};`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
 
     await utils.wait(1500)
     if (data.length > 0) {
