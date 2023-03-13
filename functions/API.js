@@ -578,10 +578,11 @@ async function sendId(req,res){
   var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
   data=data[0]
 
-  console.log(recivedJson);
+  
   try {
-    if(!recivedJson.back){
+    if(recivedJson.front){
       const file1 = Buffer.from(recivedJson.front, 'base64');
+      console.log(file1);
       if(!data.back){
         await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}' WHERE id=${data.id};`)
       }else{
@@ -589,8 +590,9 @@ async function sendId(req,res){
       }
       
     }
-    if(!recivedJson.front){
+    if(recivedJson.back){
     const file2 = Buffer.from(recivedJson.back, 'base64');
+    console.log(file2);
     if(!data.front){
       await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}' WHERE id=${data.id};`)
     }else{
