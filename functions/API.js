@@ -581,7 +581,7 @@ async function sendId(req,res){
   
   try {
     if(received.front){
-      const file1 = Buffer.from(receivedPOST.front, 'base64');
+      const file1 = Buffer.from(received.front, 'base64');
       if(!data.back){
         await utils.queryDatabase(`UPDATE Usuaris SET front='${file1}' WHERE id=${data.id};`)
       }else{
@@ -590,7 +590,7 @@ async function sendId(req,res){
       
     }
     if(received.back){
-    const file2 = Buffer.from(receivedPOST.back, 'base64');
+    const file2 = Buffer.from(received.back, 'base64');
     if(!data.front){
       await utils.queryDatabase(`UPDATE Usuaris SET back='${file2}' WHERE id=${data.id};`)
     }else{
