@@ -64,7 +64,7 @@ async function getProfiles(req,res){
     let result = { status: "KO", result: "Unkown type" }
     try {
       
-      var data = await utils.queryDatabase("SELECT * FROM Usuaris;")
+      var data = await utils.queryDatabase("SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris;")
       await utils.wait(1500)
       if (data.length > 0) {
         result = { status: "OK", result: data }
@@ -80,7 +80,7 @@ async function getProfiles(req,res){
 async function getFilteredProfiles(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  let query="SELECT * FROM Usuaris "
+  let query="SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris "
   let ands=0;
 
   // if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
@@ -148,7 +148,7 @@ async function getProfile(req,res){
   let result = { status: "KO", result: "Invalid param" }
 
   if(receivedPOST.session){
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+    var data = await utils.queryDatabase(`SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -171,7 +171,7 @@ async function getProfile(req,res){
   if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id};`)
+    var data = await utils.queryDatabase(`SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris WHERE id=${id};`)
 
     await utils.wait(1500)
     if (data.length > 0) {
