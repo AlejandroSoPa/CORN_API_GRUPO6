@@ -1,13 +1,8 @@
 const express = require('express')
-const fs = require('fs/promises')
-const url = require('url')
-const post = require('./post.js')
-const { v4: uuidv4 } = require('uuid')
-const mysql=require('mysql2')
 const api=require('./functions/API.js')
 
 // Start HTTP server
-const app = express()
+const app = express();
 
 // Set port number
 const port = process.env.PORT || 3000
@@ -25,7 +20,7 @@ process.on("SIGINT", () => {
   httpServer.close()
 })
 
-app.use('/test', api.test) // TEST ENDPOINT WITH GET
+app.get('/test', api.test) // TEST ENDPOINT WITH GET
 
 app.use('/API', api.router)
 

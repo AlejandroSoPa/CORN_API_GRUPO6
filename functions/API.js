@@ -1,19 +1,20 @@
-const fs = require('fs/promises')
-const url = require('url')
 const post = require('../post.js')
 const { v4: uuidv4 } = require('uuid')
-const mysql=require('mysql2')
 const utils=require('./utils')
 var express = require('express');
 var router = express.Router();
 const date = require('date-and-time')
 var bcrypt = require("bcryptjs");
+const fs=require("fs/promises")
 
 var recivedJson=null
 // NON PROTECTED BLOCK:
 router.post('/get_profiles',getProfiles)
+router.post('/get_filtered_profiles',getFilteredProfiles)
 router.post('/get_profile',getProfile)
+router.post('/validate',validateUser)
 router.post('/login',login)
+router.post('/logout',logout)
 router.post('/singup',singup)
 router.post('/transaccions',transactionDetailsByUser)
 // VALIDATE SESSION TOKEN
@@ -22,6 +23,7 @@ router.post('/transaccions',transactionDetailsByUser)
 router.post('/setup_payment',validateSession,setup_payment)
 router.post('/start_payment',validateSession,start_payment)
 router.post('/finish_payment',validateSession,finish_payment)
+router.post('/send_id',validateSession,sendId)
 
 // NON PROTECTED BLOCK:
 
@@ -43,13 +45,27 @@ async function test (req,res){
     res.end(JSON.stringify(result))
 }
 
+async function logout(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  if(!receivedPOST.session){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  try {
+    await utils.queryDatabase(`UPDATE Usuaris SET session_token=null WHERE session_token='${receivedPOST.session}' `)
+    return res.end(JSON.stringify({ status: "OK", result: "logout" }))
+  } catch (error) {
+    console.log(error);
+    return res.end(JSON.stringify({ status: "KO", result: "Database error" }))
+  }
+}
+
 // Fetch all profiles
 async function getProfiles(req,res){
-  console.log("getprofiles");
     let result = { status: "KO", result: "Unkown type" }
     try {
       
-      var data = await utils.queryDatabase("SELECT * FROM Usuaris;")
+      var data = await utils.queryDatabase("SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris;")
       await utils.wait(1500)
       if (data.length > 0) {
         result = { status: "OK", result: data }
@@ -61,22 +77,116 @@ async function getProfiles(req,res){
     res.end(JSON.stringify(result))
 }
 
+// fetch filtered profiles
+async function getFilteredProfiles(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  let result = { status: "KO", result: "Invalid param" }
+  let query="SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris "
+  let ands=0;
+
+  // if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
+  if(receivedPOST.min2||receivedPOST.max2){
+    query="SELECT u.*,COUNT(t.Quantitat) AS trans FROM Usuaris u INNER JOIN Transaccions t ON t.Desti=u.id OR t.Origen=u.id "
+  }
+
+  if(receivedPOST.min1||receivedPOST.max1||receivedPOST.status){
+  query+="WHERE "
+  }
+
+  if(receivedPOST.min1 ){
+    query+=`wallet>=${receivedPOST.min1} `
+    ands++
+  }
+  if(receivedPOST.max1 ){
+    if(ands>0){query+="AND "}
+    query+=`wallet<=${receivedPOST.max1} `
+    ands++
+  }
+ 
+  if(receivedPOST.status ){
+    if(ands>0){query+="AND "}
+    query+=`status=${receivedPOST.status} `
+  }
+  if(receivedPOST.min2||receivedPOST.max2){
+    query+="GROUP BY u.id "
+  }
+  let having=0
+  if(receivedPOST.min2 ){
+    query+=`HAVING COUNT(t.Quantitat)>=${receivedPOST.min2} `
+    ands++
+    having++
+  }
+  if(receivedPOST.max2 ){
+    if(having>0){
+      query+=`AND COUNT(t.Quantitat)>=${receivedPOST.min2} `
+    }
+    else{
+
+      query+=`HAVING COUNT(t.Quantitat)<=${receivedPOST.max2} `
+    }
+    ands++
+    having++
+  }
+  query+=";"
+    try {
+      
+      var data = await utils.queryDatabase(query)
+      await utils.wait(1500)
+      if (data.length > 0) {
+        result = { status: "OK", result: data }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+    } catch (error) {
+      console.log(error);
+      result = { status: "KO", result: "Unkown type" }
+    }
+    res.end(JSON.stringify(result))
+}
+
 // Fetch especific profile
 async function getProfile(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
-  let phone
-  try {
-     phone=Number.parseInt(receivedPOST.phone)
-  } catch (error) {
-    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+
+  if(receivedPOST.session){
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+
+    
+
+    await utils.wait(1500)
+    if (data.length > 0) {
+      result = { status: "OK", result: data[0] }
+      return res.send(result)
+    }
+    else{
+      return res.send(result)
+    }
   }
 
-  if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(!receivedPOST.id ){return res.end(JSON.stringify(result))}
+  let id
+  try {
+     id=Number.parseInt(receivedPOST.id)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+  }
+
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone=${phone};`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id};`)
+
+    if(data[0].front){
+      var base64 = await fs.readFile(`../private/${data[0].front}`, { encoding: 'base64'})
+      data[0].front=base64
+
+    }
+    
+    if(data[0].back){
+      var base64 = await fs.readFile(`../private/${data[0].back}`, { encoding: 'base64'})
+      data[0].back=base64
+
+    } 
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -89,6 +199,44 @@ async function getProfile(req,res){
     result = { status: "KO", result: "Connection to database error" }
   }
   res.end(JSON.stringify(result))
+}
+
+// validate DNI
+async function validateUser(req,res){
+  let receivedPOST = await post.getPostObject(req)
+  // change DESKTOP to work with id instead the phone
+  if(!receivedPOST.id||!receivedPOST.status){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  let id
+  try {
+     id=Number.parseInt(receivedPOST.id)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+  }
+
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+
+  let exists=await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id}`)
+
+  if(exists.length==0){return res.end(JSON.stringify({ status: "KO", result: "User dont exists" }))}
+
+  let status
+  try {
+     status=Number.parseInt(receivedPOST.status)
+  } catch (error) {
+    return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+  }
+
+  if(Number.isNaN(status)) return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+
+  if(status!=1 && status!=2 && status!=3 && status!=4){
+    return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
+  }
+
+  await utils.queryDatabase(`UPDATE Usuaris SET status = '${status}' WHERE id='${id}';`)
+  return res.end(JSON.stringify({ status: "OK", result: "Status updated!" }))
+
 }
 
 // Create user
@@ -186,39 +334,60 @@ async function login(req,res){
 async function transactionDetailsByUser(req,res){
   let receivedPOST = await post.getPostObject(req)
   let result = { status: "KO", result: "Invalid param" }
-  if(!receivedPOST.phone){return res.end(JSON.stringify(result))}
-  let phone
-  try {
-     phone=Number.parseInt(receivedPOST.phone)
-  } catch (error) {
-    return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  // change phone to id in desktop
+  if(!receivedPOST.id && !receivedPOST.session){return res.end(JSON.stringify(result))}
+  let id
+  if(!receivedPOST.session){
+    try {
+       id=Number.parseInt(receivedPOST.id)
+    } catch (error) {
+      return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
+    }
+
+  } else{
+    let user=await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
+    if(user.length==0){
+      return res.end(JSON.stringify({ status: "KO", result: "token is invalid" }))
+    }
+    id=user[0].id
   }
 
-  if(Number.isNaN(phone)) return res.end(JSON.stringify({ status: "KO", result: "Phone is invalid" }))
+  if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${phone} OR Desti=${phone};`)
+    var user=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${id}'`)
+    if (user.length > 0) {
+      user=user[0];
+    }
+    else{return res.end(JSON.stringify({ status: "KO", result: "user invalid" }))}
+    var data = await utils.queryDatabase(`SELECT * FROM Transaccions WHERE Origen=${user.id} OR Desti=${user.id};`)
     let endResults=[];
     if (data.length > 0) {
-      data.forEach(element => {
+      await Promise.all(data.map(async element => {
         if(element.Origen && element.Desti){
 
-          if(element.Origen==phone){
+          if(element.Origen==user.id){
+            var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Desti}'`)
+            user2=user2[0]
             endResults.push({
-              text:"Has transferit: "+element.Quantitat+" al telefon: "+element.Desti,
-              dataJson:element
+              text:"Has transferit: "+element.Quantitat+" al telefon: "+user2.phone+" del usuari: "+user2.name,
+              dataJson:element,
+              wallet:user.wallet
             })
           }
           else{
+            var user2=await utils.queryDatabase(`SELECT * FROM Usuaris where id='${element.Origen}'`)
+            user2=user2[0]
             endResults.push({
-              text:"Has rebut: "+element.Quantitat+" del telefon: "+element.Origen,
-              dataJson:element
+              text:"Has rebut: "+element.Quantitat+" del telefon: "+user2.phone+" del usuari: "+user2.name,
+              dataJson:element,
+              wallet:user.wallet
             })
           }
         }
           
-        }
-      );
+        }))
+      
       result = { status: "OK", result: endResults }
     }
     await utils.wait(1500)
@@ -238,7 +407,7 @@ async function validateSession(req,res,next){
   let result = { status: "KO", result: "no session token" }
   if(!received.session) return res.end(JSON.stringify(result))
   let pass=await utils.validateSession(received.session)
-  if(!pass) return res.end(JSON.stringify(result))
+  if(!pass || !received) return res.end(JSON.stringify(result))
   recivedJson=received
   next()
 }
@@ -257,7 +426,7 @@ async function setup_payment(req,res){
   }
   
   var datatemp = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
-  phone=datatemp[0].phone
+  phone=datatemp[0].id
   try {
     amount=Number.parseInt(receivedPOST.amount)
   } catch (error) {
@@ -307,7 +476,7 @@ async function start_payment(req,res){
   }
 
   var datatemp = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
-  phone=datatemp[0].phone
+  phone=datatemp[0].id
 
   let token=receivedPOST.token
   
@@ -374,7 +543,7 @@ async function finish_payment(req,res){
       return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
     }
 
-    var data2 = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE phone='${desti}';`)
+    var data2 = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id='${desti}';`)
     
     if (data2.length == 0) {
       return res.end(JSON.stringify({ status: "KO", result: "Transaction Phone is invalid" }))
@@ -387,12 +556,12 @@ async function finish_payment(req,res){
 
     let now= date.format(new Date(),'YYYY/MM/DD HH:mm:ss');
     await utils.queryDatabase(`SET AUTOCOMMIT=0`)
-    await utils.queryDatabase(`BEGIN TRANSACTION;`)
-    await utils.queryDatabase(`UPDATE Transaccions SET Origen=${data.phone},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE phone=${phone}`)
-    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE phone=${data2.phone}`)
+    await utils.queryDatabase(`START TRANSACTION;`)
+    await utils.queryDatabase(`UPDATE Transaccions SET Origen=${data.id},Accepted=1,TimeAccept='${now}' WHERE token='${token}'`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data.wallet) - Number.parseInt(transacction.Quantitat)} WHERE id=${data.id}`)
+    await utils.queryDatabase(`UPDATE Usuaris SET wallet=${Number.parseInt(data2.wallet) + Number.parseInt(transacction.Quantitat)} WHERE id=${data2.id}`)
     await utils.queryDatabase(`COMMIT;`)
-    await utils.queryDatabase(`END TRANSACTION;`)
+    // await utils.queryDatabase(`END TRANSACTION;`)
     await utils.queryDatabase(`SET AUTOCOMMIT=1`)
 
     result = { status: "OK", result: "TRANSACTION COMPLETED" }
@@ -415,6 +584,57 @@ async function finish_payment(req,res){
 
 }
 
+async function sendId(req,res){
+  let result = { status: "KO", result: "Invalid param" }
+  
+  if(!recivedJson.front && !recivedJson.back){
+    return res.end(JSON.stringify({ status: "KO", result: "Bad request" }))
+  }
+  var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${recivedJson.session}';`)
+  data=data[0]
+
+ 
+
+// Guardar les dades binaries en un arxiu (a la carpeta ‘private’ amb el nom original)
+  const path = "../private"
+  await fs.mkdir(path, { recursive: true }) // Crea el directori si no existeix
+  
+
+  
+  try {
+    if(recivedJson.front){
+      const file1 = Buffer.from(recivedJson.front, 'base64');
+      let name=utils.makeToken(20)
+      await fs.writeFile(`${path}/${name}`, file1)
+      console.log(file1);
+      if(!data.back){
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${name}' WHERE id=${data.id};`)
+      }else{
+        await utils.queryDatabase(`UPDATE Usuaris SET front='${name}',status=2 WHERE id=${data.id};`)
+      }
+      
+    }
+    if(recivedJson.back){
+    const file2 = Buffer.from(recivedJson.back, 'base64');
+    let name=utils.makeToken(20)
+      await fs.writeFile(`${path}/${name}`, file2)
+      console.log(file2);
+    console.log(file2);
+    if(!data.front){
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${name}' WHERE id=${data.id};`)
+    }else{
+      await utils.queryDatabase(`UPDATE Usuaris SET back='${name}',status=2 WHERE id=${data.id};`)
+    }
+    
+    }
+    
+
+    return res.end(JSON.stringify({status:"OK",result:"files uploaded"}))
+  } catch (error) {
+    return res.end(JSON.stringify(result))
+  }
+
+}
 
 
-module.exports = { test,getProfiles,router }
+module.exports = { router,test }
