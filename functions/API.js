@@ -151,17 +151,7 @@ async function getProfile(req,res){
   if(receivedPOST.session){
     var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE session_token='${receivedPOST.session}';`)
 
-    if(data[0].front){
-      var base64 = await fs.readFile(`../private/${data[0].front}`, { encoding: 'base64'})
-      data[0].front=base64
-
-    }
-    // TODO HERE
-    if(data[0].back){
-      var base64 = await fs.readFile(`../private/${data[0].back}`, { encoding: 'base64'})
-      data[0].back=base64
-
-    } 
+    
 
     await utils.wait(1500)
     if (data.length > 0) {
@@ -184,7 +174,19 @@ async function getProfile(req,res){
   if(Number.isNaN(id)) return res.end(JSON.stringify({ status: "KO", result: "id is invalid" }))
 
   try {
-    var data = await utils.queryDatabase(`SELECT id,name,surname,phone,session_token,wallet,email,status FROM Usuaris WHERE id=${id};`)
+    var data = await utils.queryDatabase(`SELECT * FROM Usuaris WHERE id=${id};`)
+
+    if(data[0].front){
+      var base64 = await fs.readFile(`../private/${data[0].front}`, { encoding: 'base64'})
+      data[0].front=base64
+
+    }
+    
+    if(data[0].back){
+      var base64 = await fs.readFile(`../private/${data[0].back}`, { encoding: 'base64'})
+      data[0].back=base64
+
+    } 
 
     await utils.wait(1500)
     if (data.length > 0) {
