@@ -5,6 +5,7 @@ var express = require('express');
 var router = express.Router();
 const date = require('date-and-time')
 var bcrypt = require("bcryptjs");
+const fs=require("fs")
 
 var recivedJson=null
 // NON PROTECTED BLOCK:
