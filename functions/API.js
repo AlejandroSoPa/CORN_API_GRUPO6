@@ -392,7 +392,7 @@ async function validateSession(req,res,next){
   let result = { status: "KO", result: "no session token" }
   if(!received.session) return res.end(JSON.stringify(result))
   let pass=await utils.validateSession(received.session)
-  if(!pass) return res.end(JSON.stringify(result))
+  if(!pass || !received) return res.end(JSON.stringify(result))
   recivedJson=received
   next()
 }
