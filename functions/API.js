@@ -234,7 +234,7 @@ async function validateUser(req,res){
     return res.end(JSON.stringify({ status: "KO", result: "status is invalid" }))
   }
 
-  await utils.queryDatabase(`UPDATE Usuaris SET status = '${status}' WHERE id='${id}';`)
+  await utils.queryDatabase(`UPDATE Usuaris SET status = ${status} WHERE id='${id}';`)
   return res.end(JSON.stringify({ status: "OK", result: "Status updated!" }))
 
 }
