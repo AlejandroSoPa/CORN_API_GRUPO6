@@ -1,7 +1,4 @@
-const fs = require('fs/promises')
-const url = require('url')
-const post = require('../post.js')
-const { v4: uuidv4 } = require('uuid')
+
 const mysql=require('mysql2')
 var express = require('express');
 var bcrypt = require("bcryptjs");
